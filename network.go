@@ -6,14 +6,12 @@ import (
 
 type Network struct {
 	Neurons [][]neuron.Neuron `json:"Neuron"`
-	output  [][]float64
-	error   [][]float64
-	delta   [][]float64
+	Output  [][]float64
+	Error   [][]float64
+	Delta   [][]float64
 }
 
-func New(layer []int) *Network {
-
-	n := new(Network)
+func New(layer []int)  (n *Network) {
 
 	//Build neurons
 	for l := range layer {
@@ -28,31 +26,34 @@ func New(layer []int) *Network {
 			deltaLayer = append(deltaLayer, 0.0)
 		}
 		n.Neurons = append(n.Neurons, neuronLayer)
-		n.output = append(n.output, outputLayer)
-		n.error = append(n.error, errorLayer)
-		n.delta = append(n.delta, deltaLayer)
+		n.Output = append(n.Output, outputLayer)
+		n.Error = append(n.Error, errorLayer)
+		n.Delta = append(n.Delta, deltaLayer)
 	}
 
 	//Initialize weights
 	n.Calc([]float64{0, 0})
 
 	return n
+
 }
 
-func (n *Network) Calc(inputs []float64) (outputs []float64) {
+func (n *Network) XXXCalc(inputs []float64) (outputs []float64) {
+        fmt.Printf("i", len(n.Neurons))
 	for i := range n.Neurons {
 		outputs = nil
 		if i == 0 {
 			//first layer uses inputs
 			for m := range n.Neurons[i] {
-				n.output[i][m] = n.Neurons[i][m].Calc(inputs)
-				outputs = append(outputs, n.output[i][m])
+        fmt.Printf("m", len(n.Neurons))
+				n.Output[i][m] = n.Neurons[i][m].Calc(inputs)
+				outputs = append(outputs, n.Output[i][m])
 			}
 		} else {
 			//next layers use previous layer
 			for m := range n.Neurons[i] {
-				n.output[i][m] = n.Neurons[i][m].Calc(n.output[i-1])
-				outputs = append(outputs, n.output[i][m])
+				n.output[i][m] = n.Neurons[i][m].Calc(n.Output[i-1])
+				outputs = append(outputs, n.Output[i][m])
 			}
 		}
 		inputs = outputs
@@ -65,16 +66,16 @@ func (n *Network) Train(inputs []float64, target []float64) {
 		for m := 0; m < len(n.Neurons[i]); m++ {
 			if i == len(n.Neurons)-1 {
 				//Output Layer
-				n.error[i][m] = target[m] - n.output[i][m]
-				n.delta[i][m] = n.error[i][m] * n.Neurons[i][m].Derivative(n.output[i][m])
+				n.Error[i][m] = target[m] - n.Output[i][m]
+				n.Delta[i][m] = n.Error[i][m] * n.Neurons[i][m].Derivative(n.Output[i][m])
 
 			} else {
 				//Remaining Layers
-				n.error[i][m] = 0
+				n.Error[i][m] = 0
 				for j := 0; j < len(n.Neurons[i+1]); j++ {
-					n.error[i][m] += n.delta[i+1][j] * n.Neurons[i+1][j].Weight[m]
+					n.Error[i][m] += n.Delta[i+1][j] * n.Neurons[i+1][j].Weight[m]
 				}
-				n.delta[i][m] = n.error[i][m] * n.Neurons[i][m].Derivative(n.output[i][m])
+				n.Delta[i][m] = n.error[i][m] * n.Neurons[i][m].Derivative(n.Output[i][m])
 			}
 		}
 	}
