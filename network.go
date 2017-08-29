@@ -11,7 +11,7 @@ type Network struct {
 	Delta   [][]float64
 }
 
-func New(layer []int)  (n *Network) {
+func New(layer []int)  (n Network) {
 
 	//Build neurons
 	for l := range layer {
@@ -38,21 +38,19 @@ func New(layer []int)  (n *Network) {
 
 }
 
-func (n *Network) XXXCalc(inputs []float64) (outputs []float64) {
-        fmt.Printf("i", len(n.Neurons))
+func (n *Network) Calc(inputs []float64) (outputs []float64) {
 	for i := range n.Neurons {
 		outputs = nil
 		if i == 0 {
 			//first layer uses inputs
 			for m := range n.Neurons[i] {
-        fmt.Printf("m", len(n.Neurons))
 				n.Output[i][m] = n.Neurons[i][m].Calc(inputs)
 				outputs = append(outputs, n.Output[i][m])
 			}
 		} else {
 			//next layers use previous layer
 			for m := range n.Neurons[i] {
-				n.output[i][m] = n.Neurons[i][m].Calc(n.Output[i-1])
+				n.Output[i][m] = n.Neurons[i][m].Calc(n.Output[i-1])
 				outputs = append(outputs, n.Output[i][m])
 			}
 		}
@@ -75,7 +73,7 @@ func (n *Network) Train(inputs []float64, target []float64) {
 				for j := 0; j < len(n.Neurons[i+1]); j++ {
 					n.Error[i][m] += n.Delta[i+1][j] * n.Neurons[i+1][j].Weight[m]
 				}
-				n.Delta[i][m] = n.error[i][m] * n.Neurons[i][m].Derivative(n.Output[i][m])
+				n.Delta[i][m] = n.Error[i][m] * n.Neurons[i][m].Derivative(n.Output[i][m])
 			}
 		}
 	}
@@ -86,16 +84,16 @@ func (n *Network) Train(inputs []float64, target []float64) {
 			if i == 0 {
 				//Input Layer
 				for w := range inputs {
-					n.Neurons[i][m].Weight[w] += learningRate * inputs[w] * n.delta[i][m]
+					n.Neurons[i][m].Weight[w] += learningRate * inputs[w] * n.Delta[i][m]
 				}
 			} else {
 				//Remaining Layers
 				for w := range n.Neurons[i][m].Weight {
 					if w == len(n.Neurons[i][m].Weight)-1 {
 						//Bias is last
-						n.Neurons[i][m].Weight[w] += learningRate * 1 * n.delta[i][m]
+						n.Neurons[i][m].Weight[w] += learningRate * 1 * n.Delta[i][m]
 					} else {
-						n.Neurons[i][m].Weight[w] += learningRate * n.output[i-1][w] * n.delta[i][m]
+						n.Neurons[i][m].Weight[w] += learningRate * n.Output[i-1][w] * n.Delta[i][m]
 					}
 				}
 			}
