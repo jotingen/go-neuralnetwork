@@ -1,6 +1,7 @@
 package network
 
 import (
+	"fmt"
 	"github.com/jotingen/go-neuron"
 )
 
@@ -11,7 +12,7 @@ type Network struct {
 	Delta   [][]float64
 }
 
-func New(layer []int)  (n Network) {
+func New(layer []int) (n Network) {
 
 	//Build neurons
 	for l := range layer {
@@ -21,6 +22,9 @@ func New(layer []int)  (n Network) {
 		var deltaLayer []float64
 		for n := 0; n < layer[l]; n++ {
 			neuronLayer = append(neuronLayer, neuron.Neuron{})
+			if l != len(layer)-1 {
+				neuronLayer[n].Function = "RELU"
+			}
 			outputLayer = append(outputLayer, 0.0)
 			errorLayer = append(errorLayer, 0.0)
 			deltaLayer = append(deltaLayer, 0.0)
@@ -60,6 +64,9 @@ func (n *Network) Calc(inputs []float64) (outputs []float64) {
 }
 
 func (n *Network) Train(inputs []float64, target []float64) {
+	//Need to calculate to get output values set
+	n.Calc(inputs)
+
 	for i := len(n.Neurons) - 1; i >= 0; i-- {
 		for m := 0; m < len(n.Neurons[i]); m++ {
 			if i == len(n.Neurons)-1 {
@@ -83,8 +90,13 @@ func (n *Network) Train(inputs []float64, target []float64) {
 		for m := 0; m < len(n.Neurons[i]); m++ {
 			if i == 0 {
 				//Input Layer
-				for w := range inputs {
-					n.Neurons[i][m].Weight[w] += learningRate * inputs[w] * n.Delta[i][m]
+				for w := range n.Neurons[i][m].Weight {
+					if w == len(n.Neurons[i][m].Weight)-1 {
+						//Bias is last
+						n.Neurons[i][m].Weight[w] += learningRate * 1 * n.Delta[i][m]
+					} else {
+						n.Neurons[i][m].Weight[w] += learningRate * inputs[w] * n.Delta[i][m]
+					}
 				}
 			} else {
 				//Remaining Layers
@@ -97,6 +109,14 @@ func (n *Network) Train(inputs []float64, target []float64) {
 					}
 				}
 			}
+		}
+	}
+}
+
+func (nn *Network) Print() {
+	for l := 0; l < len(nn.Neurons); l++ {
+		for n := 0; n < len(nn.Neurons[l]); n++ {
+			fmt.Printf("%d:%d  %+4.2f %s  %+6.4f [%+6.4f %+6.4f]\n", l, n, nn.Neurons[l][n].Weight, nn.Neurons[l][n].Function, nn.Output[l][n], nn.Error[l][n], nn.Delta[l][n])
 		}
 	}
 }
